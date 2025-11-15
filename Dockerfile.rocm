@@ -1,6 +1,9 @@
-ARG BASE_IMAGE=rocm/pytorch:latest
+FROM rocm/onnxruntime:rocm7.0.2_ub24.04_ort1.22_torch2.8.0
+
+# ARG BASE_IMAGE=rocm/pytorch:latest
+# ARG BASE_IMAGE=rocm/pytorch:rocm6.4.4_ubuntu24.04_py3.12_pytorch_release_2.7.1
 # hadolint ignore=DL3006
-FROM ${BASE_IMAGE}
+# FROM ${BASE_IMAGE}
 LABEL org.opencontainers.image.source="https://github.com/speaches-ai/speaches"
 LABEL org.opencontainers.image.licenses="MIT"
 # `ffmpeg` is installed because without it `gradio` won't work with mp3(possible others as well) files
