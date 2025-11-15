@@ -18,6 +18,9 @@ services:
       - HSA_OVERRIDE_GFX_VERSION=10.3.0
       - TORCH_ROCM_AOTRITON_ENABLE_EXPERIMENTAL=1
       - MIOPEN_LOG_LEVEL=3
+      # 🦜 PARAKEET IS NOW THE PRIMARY MODEL (faster and more accurate)
+      - PARAKEET_MODEL=istupakov/parakeet-tdt-0.6b-v3-onnx
+      # Whisper as fallback
       - WHISPER_MODEL=Systran/faster-whisper-large-v3
       - KOKORO_MODEL=speaches-ai/Kokoro-82M-v1.0-ONNX
       - DEVICE=rocm

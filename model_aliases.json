@@ -1,4 +1,7 @@
 {
+    "parakeet": "istupakov/parakeet-tdt-0.6b-v3-onnx",
+    "parakeet-0.6b": "istupakov/parakeet-tdt-0.6b-v3-onnx",
+    "parakeet-1.1b": "istupakov/parakeet-tdt-1.1b-onnx",
     "tts-1": "speaches-ai/Kokoro-82M-v1.0-ONNX",
     "tts-1-hd": "speaches-ai/Kokoro-82M-v1.0-ONNX",
     "whisper-1": "openai/whisper-large-v3",

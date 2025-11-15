@@ -1,50 +1,84 @@
 FROM rocm/onnxruntime:rocm7.0.2_ub24.04_ort1.22_torch2.8.0
 
-# ARG BASE_IMAGE=rocm/pytorch:latest
-# ARG BASE_IMAGE=rocm/pytorch:rocm6.4.4_ubuntu24.04_py3.12_pytorch_release_2.7.1
-# hadolint ignore=DL3006
-# FROM ${BASE_IMAGE}
 LABEL org.opencontainers.image.source="https://github.com/speaches-ai/speaches"
 LABEL org.opencontainers.image.licenses="MIT"
-# `ffmpeg` is installed because without it `gradio` won't work with mp3(possible others as well) files
-# hadolint ignore=DL3008
+
+# Install system dependencies
 RUN apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ca-certificates curl ffmpeg && \
-    apt-get clean && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    ca-certificates \
+    curl \
+    ffmpeg \
+    git \
+    build-essential \
+    && apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-
-COPY ./requirements.txt /opt/requirements.txt
-RUN . /opt/venv/bin/activate && pip install -r /opt/requirements.txt --no-deps
-RUN . /opt/venv/bin/activate && pip install numba llvmlite openai-whisper==20250625 --no-deps
-# "ubuntu" is the default user on ubuntu images with UID=1000. This user is used for two reasons:
-#   1. It's generally a good practice to run containers as non-root users. See https://www.docker.com/blog/understanding-the-docker-user-instruction/
-#   2. Docker Spaces on HuggingFace don't support running containers as root. See https://huggingface.co/docs/hub/en/spaces-sdks-docker#permissions
-# NOTE: the following command was added since nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04 doesn't have the `ubuntu` user
+# Create ubuntu user (UID 1000)
 RUN useradd --create-home --shell /bin/bash --uid 1000 ubuntu || true
-WORKDIR $HOME/speaches
-COPY --chown=ubuntu . .
-RUN . /opt/venv/bin/activate && pip install . --no-deps
+
+# Set working directory
+WORKDIR /home/ubuntu/speaches
+
+# Copy requirements and install Python dependencies
+COPY requirements.txt pyproject.toml ./
+
+# Install uv in the virtual environment
+RUN . /opt/venv/bin/activate && \
+    pip install --upgrade pip setuptools wheel uv
+
+# Install ROCm PyTorch first (preserving existing ROCm packages)
+RUN . /opt/venv/bin/activate && \
+    uv pip install --index-url https://download.pytorch.org/whl/rocm7.0 --extra-index-url https://pypi.org/simple torch torchvision torchaudio pytorch-triton-rocm
+
+# Install Python dependencies with frozen sync to preserve ROCm
+RUN . /opt/venv/bin/activate && \
+    uv sync --frozen || \
+    (uv pip install -r requirements.txt --no-deps && \
+     uv pip install numba llvmlite openai-whisper==20250625 --no-deps && \
+     uv pip install kokoro-onnx transformers librosa soundfile --no-deps)
+
+# Install ROCm-specific packages
+RUN . /opt/venv/bin/activate && \
+    uv pip install onnxruntime-rocm --no-deps || \
+    echo "ROCm ONNX Runtime already available"
+
+# Copy application code
+COPY --chown=ubuntu:ubuntu . .
+
+# Install the package
+RUN . /opt/venv/bin/activate && \
+    pip install . --no-deps
+
+# Create cache directories
+RUN mkdir -p /home/ubuntu/.cache/huggingface/hub && \
+    chown -R ubuntu:ubuntu /home/ubuntu/.cache
+
+# Switch to ubuntu user
 USER ubuntu
+
+# Environment variables
 ENV HOME=/home/ubuntu \
-    PATH=/home/ubuntu/.local/bin:$PATH
-# https://docs.astral.sh/uv/guides/integration/docker/#installing-uv
-# Creating a directory for the cache to avoid the following error:
-# PermissionError: [Errno 13] Permission denied: '/home/ubuntu/.cache/huggingface/hub'
-# This error occurs because the volume is mounted as root and the `ubuntu` user doesn't have permission to write to it. Pre-creating the directory solves this issue.
-RUN mkdir -p $HOME/.cache/huggingface/hub
-ENV UVICORN_HOST=0.0.0.0
-ENV UVICORN_PORT=8000
-#ENV PATH="$HOME/speaches/.venv/bin:$PATH"
-# https://huggingface.co/docs/huggingface_hub/en/package_reference/environment_variables#hfhubenablehftransfer
-# NOTE: I've disabled this because it doesn't inside of Docker container. I couldn't pinpoint the exact reason. This doesn't happen when running the server locally.
-# RuntimeError: An error occurred while downloading using `hf_transfer`. Consider disabling HF_HUB_ENABLE_HF_TRANSFER for better error handling.
-ENV HF_HUB_ENABLE_HF_TRANSFER=0
-# https://huggingface.co/docs/huggingface_hub/en/package_reference/environment_variables#donottrack
-# https://www.reddit.com/r/StableDiffusion/comments/1f6asvd/gradio_sends_ip_address_telemetry_by_default/
-ENV DO_NOT_TRACK=1
-ENV GRADIO_ANALYTICS_ENABLED="False"
-ENV DISABLE_TELEMETRY=1
-ENV HF_HUB_DISABLE_TELEMETRY=1
+    PATH=/home/ubuntu/.local/bin:/opt/venv/bin:$PATH \
+    UVICORN_HOST=0.0.0.0 \
+    UVICORN_PORT=8000 \
+    HF_HUB_ENABLE_HF_TRANSFER=0 \
+    DO_NOT_TRACK=1 \
+    GRADIO_ANALYTICS_ENABLED=False \
+    DISABLE_TELEMETRY=1 \
+    HF_HUB_DISABLE_TELEMETRY=1
+
+# ROCm-specific environment variables
+ENV HSA_OVERRIDE_GFX_VERSION=10.3.0 \
+    TORCH_ROCM_AOTRITON_ENABLE_EXPERIMENTAL=1 \
+    MIOPEN_LOG_LEVEL=3 \
+    HIP_VISIBLE_DEVICES=0
+
 EXPOSE 8000
-CMD ["uvicorn", "--factory", "speaches.main:create_app"]
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD python -c "import requests; requests.get('http://localhost:8000/health', timeout=5)"
+
+# Start the application
+CMD ["uvicorn", "--factory", "speaches.main:create_app", "--host", "0.0.0.0", "--port", "8000"]

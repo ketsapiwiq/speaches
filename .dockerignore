@@ -1,6 +1,7 @@
 *
 !src
 !pyproject.toml
+!requirements.txt
 !uv.lock
 !model_aliases.json
 !realtime-console
