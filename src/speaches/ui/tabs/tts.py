@@ -78,7 +78,7 @@ Setting this will resample the generated audio to the desired sample rate.
 You may want to set this if you are going to use 'rhasspy/piper-voices' with voices of different qualities but want to keep the same sample rate.
 Default: None (No resampling)
 """,
-            value=lambda: None,
+            value=None,
         )
         button = gr.Button("Generate Speech")
         output = gr.Audio(type="filepath")
