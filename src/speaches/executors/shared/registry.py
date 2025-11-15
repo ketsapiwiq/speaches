@@ -19,7 +19,7 @@ from speaches.executors.faster_whisper import (
     WhisperModelManager as FasterWhisperModelManager,
     whisper_model_registry as faster_whisper_model_registry,
 )
-from speaches.executors.whisper import WhisperModelManager, whisper_model_registry
+from speaches.executors.openai_whisper import WhisperModelManager, whisper_model_registry
 
 
 class ExecutorRegistry:
