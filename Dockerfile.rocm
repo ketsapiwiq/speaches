@@ -9,27 +9,26 @@ LABEL org.opencontainers.image.licenses="MIT"
 # `ffmpeg` is installed because without it `gradio` won't work with mp3(possible others as well) files
 # hadolint ignore=DL3008
 RUN apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git ca-certificates curl ffmpeg && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ca-certificates curl ffmpeg && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
 
 COPY ./requirements.txt /opt/requirements.txt
 RUN . /opt/venv/bin/activate && pip install -r /opt/requirements.txt --no-deps
-RUN . /opt/venv/bin/activate && pip install openai-whisper==20250625 --no-deps
+RUN . /opt/venv/bin/activate && pip install numba llvmlite openai-whisper==20250625 --no-deps
 # "ubuntu" is the default user on ubuntu images with UID=1000. This user is used for two reasons:
 #   1. It's generally a good practice to run containers as non-root users. See https://www.docker.com/blog/understanding-the-docker-user-instruction/
 #   2. Docker Spaces on HuggingFace don't support running containers as root. See https://huggingface.co/docs/hub/en/spaces-sdks-docker#permissions
 # NOTE: the following command was added since nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04 doesn't have the `ubuntu` user
 RUN useradd --create-home --shell /bin/bash --uid 1000 ubuntu || true
+WORKDIR $HOME/speaches
+COPY --chown=ubuntu . .
+RUN . /opt/venv/bin/activate && pip install . --no-deps
 USER ubuntu
 ENV HOME=/home/ubuntu \
     PATH=/home/ubuntu/.local/bin:$PATH
-WORKDIR $HOME/speaches
 # https://docs.astral.sh/uv/guides/integration/docker/#installing-uv
-COPY --chown=ubuntu . .
-
-
 # Creating a directory for the cache to avoid the following error:
 # PermissionError: [Errno 13] Permission denied: '/home/ubuntu/.cache/huggingface/hub'
 # This error occurs because the volume is mounted as root and the `ubuntu` user doesn't have permission to write to it. Pre-creating the directory solves this issue.
