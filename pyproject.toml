@@ -45,6 +45,7 @@ dependencies = [
     "torchvision>=0.22.0",
     "torchaudio>=2.7.0",
     "pytorch-triton-rocm>=3.3.0 ; sys_platform == 'linux'",
+    "whisper>=1.1.10",
 ]
 
 [dependency-groups]
