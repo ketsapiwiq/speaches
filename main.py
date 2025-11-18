@@ -45,7 +45,9 @@ def load_models():
         whisper_model_name = os.getenv("WHISPER_MODEL", "large-v3")
         logger.info(f"Loading whisper model: {whisper_model_name}")
         whisper_model = WhisperModel(
-            whisper_model_name, device=device, compute_type=compute_type
+            # FasterWhisper not working on ROCm
+            # whisper_model_name, device=device, compute_type=compute_type            
+            whisper_model_name, device="cpu", compute_type="int8"
         )
 
         # Load parakeet model
