@@ -6,7 +6,7 @@ services:
       context: .
     restart: unless-stopped
     ports:
-      - 8000:8000
+      - 3000:8000
     develop:
       watch:
         - action: rebuild
@@ -25,7 +25,7 @@ services:
       - BATCH_SIZE=8
       - BEAM_SIZE=5
       - PYTHONUNBUFFERED=1
-      - OLLAMA_HOST=http://192.168.1.50:11434
+      - CHAT_COMPLETION_BASE_URL=http://192.168.1.50:11434/v1
     devices:
       - "/dev/kfd:/dev/kfd"
       - "/dev/dri:/dev/dri"
@@ -33,10 +33,10 @@ services:
       - SYS_PTRACE
     shm_size: 8gb
     volumes:
-      - hf-hub-cache:/home/speaches/.cache/huggingface/hub
+      - ../.hf-cache:/home/speaches/.cache/huggingface/hub
       - ./model_aliases.json:/app/model_aliases.json:ro
       - ./speaches-config-rocm.py:/app/config.py:ro
-      - speaches-models:/app/models
+      - ./models:/app/models
     env_file:
       - path: .env
         required: false
