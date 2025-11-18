@@ -17,41 +17,49 @@ app = FastAPI(title="Speaches ROCm API", version="1.0.0")
 whisper_model = None
 parakeet_model = None
 
+
 def load_models():
     """Load whisper and parakeet models"""
     global whisper_model, parakeet_model
-    
+
     try:
-        # Check ROCm availability
+        # Check ROCm/CUDA availability
         if torch.cuda.is_available():
             device = "cuda"
             compute_type = "float16"
-            logger.info(f"Using ROCm GPU: {torch.cuda.get_device_name(0)}")
+            device_name = torch.cuda.get_device_name(0)
+            device_count = torch.cuda.device_count()
+            logger.info(f"Using GPU: {device_name}")
+            logger.info(f"Available GPU devices: {device_count}")
+            logger.info(f"PyTorch version: {torch.__version__}")
+            logger.info(f"CUDA available: {torch.cuda.is_available()}")
+            if hasattr(torch.version, "hip"):
+                logger.info(f"ROCm version: {torch.version.hip}")
         else:
             device = "cpu"
             compute_type = "int8"
-            logger.warning("ROCm not available, using CPU")
-        
+            logger.warning("GPU not available, using CPU")
+            logger.info(f"PyTorch version: {torch.__version__}")
+
         # Load whisper model
         whisper_model_name = os.getenv("WHISPER_MODEL", "large-v3")
         logger.info(f"Loading whisper model: {whisper_model_name}")
         whisper_model = WhisperModel(
-            whisper_model_name,
-            device=device,
-            compute_type=compute_type
+            whisper_model_name, device=device, compute_type=compute_type
         )
-        
+
         # Load parakeet model
-        parakeet_model_name = os.getenv("PARAKEET_MODEL", "parakeet-tdt-1.1b")
+        parakeet_model_name = os.getenv("PARAKEET_MODEL", "istupakov/parakeet-tdt-0.6b-v3-onnx")
         logger.info(f"Loading parakeet model: {parakeet_model_name}")
-        parakeet_model = WhisperModel(
-            parakeet_model_name,
-            device=device,
-            compute_type=compute_type
-        )
-        
+        # Load parakeet model
+        from speaches.config import OrtOptions
+        from speaches.executors.parakeet import ParakeetModelManager
+        ort_opts = OrtOptions()
+        ort_opts.exclude_providers = ['CUDAExecutionProvider', 'TensorrtExecutionProvider']
+        parakeet_model = ParakeetModelManager(ttl=3600, ort_opts=ort_opts)._load_fn(parakeet_model_name)
+
         logger.info("All models loaded successfully")
-        
+
     except Exception as e:
         logger.error(f"Error loading models: {e}")
         raise
@@ -72,7 +80,7 @@ async def list_models():
     return {
         "models": [
             {"id": "whisper-large-v3", "object": "model"},
-            {"id": "parakeet-tdt-1.1b", "object": "model"}
+            {"id": "istupakov/parakeet-tdt-0.6b-v3-onnx", "object": "model"},
         ]
     }
 
