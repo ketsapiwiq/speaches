@@ -21,26 +21,19 @@ RUN useradd --create-home --shell /bin/bash --uid 1000 ubuntu || true
 WORKDIR /home/ubuntu/speaches
 
 # Copy requirements and install Python dependencies
-COPY requirements.txt pyproject.toml ./
+COPY requirements.txt /tmp/requirements.txt
+COPY pyproject.toml /tmp/pyproject.toml
 
-# Install uv in the virtual environment
+# Install Python dependencies with ROCm support
 RUN . /opt/venv/bin/activate && \
-    pip install --upgrade pip setuptools wheel uv
-
-# Install ROCm PyTorch first (preserving existing ROCm packages)
-RUN . /opt/venv/bin/activate && \
-    uv pip install --index-url https://download.pytorch.org/whl/rocm7.0 --extra-index-url https://pypi.org/simple torch torchvision torchaudio pytorch-triton-rocm
-
-# Install Python dependencies with frozen sync to preserve ROCm
-RUN . /opt/venv/bin/activate && \
-    uv sync --frozen || \
-    (uv pip install -r requirements.txt --no-deps && \
-     uv pip install numba llvmlite openai-whisper==20250625 --no-deps && \
-     uv pip install kokoro-onnx transformers librosa soundfile --no-deps)
+    pip install --upgrade pip setuptools wheel && \
+    pip install -r /tmp/requirements.txt --no-deps && \
+    pip install numba llvmlite openai-whisper==20250625 --no-deps && \
+    pip install kokoro-onnx transformers librosa soundfile --no-deps
 
 # Install ROCm-specific packages
 RUN . /opt/venv/bin/activate && \
-    uv pip install onnxruntime-rocm --no-deps || \
+    pip install onnxruntime-rocm --no-deps || \
     echo "ROCm ONNX Runtime already available"
 
 # Copy application code

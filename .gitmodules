@@ -1,0 +1,4 @@
+[submodule "CTranslate2-rocm"]
+	path = CTranslate2-rocm
+	url = https://github.com/arlo-phoenix/CTranslate2-rocm
+	branch = rocm
