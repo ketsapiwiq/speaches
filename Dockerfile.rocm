@@ -1,0 +1,77 @@
+FROM rocm/onnxruntime:rocm7.0.2_ub24.04_ort1.22_torch2.8.0
+
+LABEL org.opencontainers.image.source="https://github.com/speaches-ai/speaches"
+LABEL org.opencontainers.image.licenses="MIT"
+
+# Install system dependencies
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    ca-certificates \
+    curl \
+    ffmpeg \
+    git \
+    build-essential \
+    && apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Create ubuntu user (UID 1000)
+RUN useradd --create-home --shell /bin/bash --uid 1000 ubuntu || true
+
+# Set working directory
+WORKDIR /home/ubuntu/speaches
+
+# Copy requirements and install Python dependencies
+COPY requirements.txt /tmp/requirements.txt
+COPY pyproject.toml /tmp/pyproject.toml
+
+# Install Python dependencies with ROCm support
+RUN . /opt/venv/bin/activate && \
+    pip install --upgrade pip setuptools wheel && \
+    pip install -r /tmp/requirements.txt --no-deps && \
+    pip install numba llvmlite openai-whisper==20250625 --no-deps && \
+    pip install kokoro-onnx transformers librosa soundfile --no-deps
+
+# Install ROCm-specific packages
+RUN . /opt/venv/bin/activate && \
+    pip install onnxruntime-rocm --no-deps || \
+    echo "ROCm ONNX Runtime already available"
+
+# Copy application code
+COPY --chown=ubuntu:ubuntu . .
+
+# Install the package
+RUN . /opt/venv/bin/activate && \
+    pip install . --no-deps
+
+# Create cache directories
+RUN mkdir -p /home/ubuntu/.cache/huggingface/hub && \
+    chown -R ubuntu:ubuntu /home/ubuntu/.cache
+
+# Switch to ubuntu user
+USER ubuntu
+
+# Environment variables
+ENV HOME=/home/ubuntu \
+    PATH=/home/ubuntu/.local/bin:/opt/venv/bin:$PATH \
+    UVICORN_HOST=0.0.0.0 \
+    UVICORN_PORT=8000 \
+    HF_HUB_ENABLE_HF_TRANSFER=0 \
+    DO_NOT_TRACK=1 \
+    GRADIO_ANALYTICS_ENABLED=False \
+    DISABLE_TELEMETRY=1 \
+    HF_HUB_DISABLE_TELEMETRY=1
+
+# ROCm-specific environment variables
+ENV HSA_OVERRIDE_GFX_VERSION=10.3.0 \
+    TORCH_ROCM_AOTRITON_ENABLE_EXPERIMENTAL=1 \
+    MIOPEN_LOG_LEVEL=3 \
+    HIP_VISIBLE_DEVICES=0
+
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD python -c "import requests; requests.get('http://localhost:8000/health', timeout=5)"
+
+# Start the application
+CMD ["uvicorn", "--factory", "speaches.main:create_app", "--host", "0.0.0.0", "--port", "8000"]
