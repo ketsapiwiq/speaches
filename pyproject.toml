@@ -46,6 +46,9 @@ dependencies = [
     "torchaudio>=2.7.0",
     "pytorch-triton-rocm>=3.3.0 ; sys_platform == 'linux'",
     "whisper>=1.1.10",
+    "onnxruntime>=1.23.2",
+    "pyannote-audio>=3.4.0",
+    "onnx>=1.19.1",
 ]
 
 [dependency-groups]
