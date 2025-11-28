@@ -79,17 +79,19 @@ def load_model_route(executor_registry: ExecutorRegistryDependency, model_id: Mo
 )
 def stop_running_model(executor_registry: ExecutorRegistryDependency, model_id: str) -> JSONResponse:
     for executor in executor_registry.all_executors():
-        if model_id in executor.model_manager.loaded_models:
-            try:
-                executor.model_manager.unload_model(model_id)
-                return JSONResponse(
-                    status_code=200,
-                    content={
-                        "message": f"Model {model_id} unloaded.",
-                    },
-                )
-            except ValueError as e:
-                return JSONResponse(status_code=409, content={"message": str(e)})
+        try:
+            executor.model_manager.unload_model(model_id)
+            return JSONResponse(
+                status_code=200,
+                content={
+                    "message": f"Model {model_id} unloaded.",
+                },
+            )
+        except KeyError:
+            # Model not found in this executor, try the next one
+            continue
+        except ValueError as e:
+            return JSONResponse(status_code=409, content={"message": str(e)})
     return JSONResponse(
         status_code=404,
         content={
