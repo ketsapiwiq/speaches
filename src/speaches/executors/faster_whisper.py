@@ -131,9 +131,16 @@ class WhisperModelManager(BaseModelManager[WhisperModel]):
         self.whisper_config = whisper_config
 
     def _load_fn(self, model_id: str) -> WhisperModel:
+        # Force CPU mode for AMD ROCm compatibility since CTranslate2 doesn't support ROCm
+        device = "cpu" if self.whisper_config.inference_device == "auto" else self.whisper_config.inference_device
+
+        logger.info(
+            f"Loading Whisper model '{model_id}' on device '{device}' with compute_type '{self.whisper_config.compute_type}'"
+        )
+
         return WhisperModel(
             model_id,
-            device=self.whisper_config.inference_device,
+            device=device,
             device_index=self.whisper_config.device_index,
             compute_type=self.whisper_config.compute_type,
             cpu_threads=self.whisper_config.cpu_threads,
