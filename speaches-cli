@@ -1,0 +1,15 @@
+#!/usr/bin/env python3
+"""
+Simple wrapper script for speaches CLI
+"""
+import sys
+import os
+
+# Add the packages directory to Python path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'packages', 'speaches-cli', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+
+from speaches_cli.main import app
+
+if __name__ == "__main__":
+    app()
