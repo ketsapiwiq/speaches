@@ -5,7 +5,7 @@
 ## Download a TTS model
 
 ```bash
-export SPEACHES_BASE_URL="http://localhost:8000"
+export SPEACHES_BASE_URL="http://localhost:9000"
 
 # Listing all available TTS models
 uvx speaches-cli registry ls --task text-to-speech | jq '.data | [].id'
@@ -22,7 +22,7 @@ uvx speaches-cli model ls --task text-to-speech | jq '.data | map(select(.id == 
 ### Curl
 
 ```bash
-export SPEACHES_BASE_URL="http://localhost:8000"
+export SPEACHES_BASE_URL="http://localhost:9000"
 export SPEECH_MODEL_ID="speaches-ai/Kokoro-82M-v1.0-ONNX"
 
 # List available voices
@@ -73,7 +73,7 @@ EOF
 
     import httpx
 
-    client = httpx.Client(base_url="http://localhost:8000/")
+    client = httpx.Client(base_url="http://localhost:9000/")
     model_id = "speaches-ai/Kokoro-82M-v1.0-ONNX"
     voice_id = "af_heart"
     res = client.post(
@@ -105,7 +105,7 @@ EOF
 
     from openai import OpenAI
 
-    openai = OpenAI(base_url="http://localhost:8000/v1", api_key="cant-be-empty")
+    openai = OpenAI(base_url="http://localhost:9000/v1", api_key="cant-be-empty")
     model_id = "speaches-ai/Kokoro-82M-v1.0-ONNX"
     voice_id = "af_heart"
     res = openai.audio.speech.create(

@@ -2,7 +2,7 @@ Before you can do anything useful with `speaches`, you'll need to want to downlo
 
 !!! note
 
-    You'll want to make sure you have the `SPEACHES_BASE_URL` environment variable set to the URL of your `speaches` server. If you're running it locally, without modifying the default port, this will be `http://localhost:8000`.
+    You'll want to make sure you have the `SPEACHES_BASE_URL` environment variable set to the URL of your `speaches` server. If you're running it locally, without modifying the default port, this will be `http://localhost:9000`.
 
 === "Speaches CLI"
 

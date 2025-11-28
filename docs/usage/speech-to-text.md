@@ -12,7 +12,7 @@ TODO: add a note about vad
 ## Download a STT model
 
 ```bash
-export SPEACHES_BASE_URL="http://localhost:8000"
+export SPEACHES_BASE_URL="http://localhost:9000"
 
 # Listing all available STT models
 uvx speaches-cli registry ls --task automatic-speech-recognition | jq '.data | [].id'
@@ -29,7 +29,7 @@ uvx speaches-cli model ls --task text-to-speech | jq '.data | map(select(.id == 
 ### Curl
 
 ```bash
-export SPEACHES_BASE_URL="http://localhost:8000"
+export SPEACHES_BASE_URL="http://localhost:9000"
 export TRANSCRIPTION_MODEL_ID="Systran/faster-distil-whisper-small.en"
 
 curl -s "$SPEACHES_BASE_URL/v1/audio/transcriptions" -F "file=@audio.wav" -F "model=$TRANSCRIPTION_MODEL_ID"
@@ -44,7 +44,7 @@ curl -s "$SPEACHES_BASE_URL/v1/audio/transcriptions" -F "file=@audio.wav" -F "mo
 
     with open('audio.wav', 'rb') as f:
         files = {'file': ('audio.wav', f)}
-        response = httpx.post('http://localhost:8000/v1/audio/transcriptions', files=files)
+        response = httpx.post('http://localhost:9000/v1/audio/transcriptions', files=files)
 
     print(response.text)
     ```
@@ -75,7 +75,7 @@ curl -s "$SPEACHES_BASE_URL/v1/audio/transcriptions" -F "file=@audio.wav" -F "mo
 === "CLI"
 
     ```bash
-    export OPENAI_BASE_URL=http://localhost:8000/v1/
+    export OPENAI_BASE_URL=http://localhost:9000/v1/
     export OPENAI_API_KEY="cant-be-empty"
     openai api audio.transcriptions.create -m Systran/faster-whisper-small -f audio.wav --response-format text
     ```

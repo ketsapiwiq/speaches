@@ -9,7 +9,7 @@ Speech embedding extraction allows you to extract high-dimensional vector repres
 ## Download a Speech Embedding Model
 
 ```bash
-export SPEACHES_BASE_URL="http://localhost:8000"
+export SPEACHES_BASE_URL="http://localhost:9000"
 
 # Listing all available speech embedding models
 uvx speaches-cli registry ls --task speaker-embedding | jq '.data | [].id'
@@ -26,7 +26,7 @@ uvx speaches-cli model ls --task speaker-embedding | jq '.data | map(select(.id 
 ### Curl
 
 ```bash
-export SPEACHES_BASE_URL="http://localhost:8000"
+export SPEACHES_BASE_URL="http://localhost:9000"
 export EMBEDDING_MODEL_ID="deepghs/pyannote-embedding-onnx"
 
 curl -s "$SPEACHES_BASE_URL/v1/audio/speech/embedding" \
@@ -45,7 +45,7 @@ curl -s "$SPEACHES_BASE_URL/v1/audio/speech/embedding" \
         files = {'file': ('audio.wav', f)}
         data = {'model': 'deepghs/pyannote-embedding-onnx'}
         response = httpx.post(
-            'http://localhost:8000/v1/audio/speech/embedding',
+            'http://localhost:9000/v1/audio/speech/embedding',
             files=files,
             data=data
         )
@@ -64,7 +64,7 @@ curl -s "$SPEACHES_BASE_URL/v1/audio/speech/embedding" \
         files = {'file': ('audio.wav', f)}
         data = {'model': 'deepghs/pyannote-embedding-onnx'}
         response = requests.post(
-            'http://localhost:8000/v1/audio/speech/embedding',
+            'http://localhost:9000/v1/audio/speech/embedding',
             files=files,
             data=data
         )
@@ -89,7 +89,7 @@ def get_embedding(audio_path: str, model_id: str) -> list[float]:
         files = {'file': (audio_path, f)}
         data = {'model': model_id}
         response = httpx.post(
-            'http://localhost:8000/v1/audio/speech/embedding',
+            'http://localhost:9000/v1/audio/speech/embedding',
             files=files,
             data=data
         )
@@ -153,7 +153,7 @@ class SpeakerVerifier:
         return is_same_speaker, similarity
 
 verifier = SpeakerVerifier(
-    base_url='http://localhost:8000',
+    base_url='http://localhost:9000',
     model_id='deepghs/pyannote-embedding-onnx',
     threshold=0.7
 )

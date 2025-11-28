@@ -11,7 +11,7 @@ Refer to the [../api.md] for additional details such as supported request parame
 ## Usage
 
 ```sh
-export SPEACHES_BASE_URL="http://localhost:8000"
+export SPEACHES_BASE_URL="http://localhost:9000"
 
 
 curl "$SPEACHES_BASE_URL/v1/audio/speech/timestamps" -F "file=@audio.wav"
