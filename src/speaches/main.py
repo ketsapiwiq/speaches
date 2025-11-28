@@ -30,6 +30,9 @@ from speaches.routers.misc import (
 from speaches.routers.models import (
     router as models_router,
 )
+from speaches.routers.ollama import (
+    router as ollama_router,
+)
 from speaches.routers.realtime_rtc import (
     router as realtime_rtc_router,
 )
@@ -138,6 +141,7 @@ def create_app() -> FastAPI:
     app.include_router(speech_router, dependencies=http_dependencies)
     app.include_router(speech_embedding_router, dependencies=http_dependencies)
     app.include_router(vad_router, dependencies=http_dependencies)
+    app.include_router(ollama_router, dependencies=http_dependencies)
 
     # WebSocket router WITHOUT authentication (handles its own)
     app.include_router(realtime_ws_router)
