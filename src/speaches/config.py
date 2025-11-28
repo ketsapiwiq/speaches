@@ -14,9 +14,9 @@ type Quantization = Literal[
 class WhisperConfig(BaseModel):
     """See https://github.com/SYSTRAN/faster-whisper/blob/master/faster_whisper/transcribe.py#L599."""
 
-    inference_device: Device = "auto"
+    inference_device: Device = "cpu"
     device_index: int | list[int] = 0
-    compute_type: Quantization = "default"  # TODO: should this even be a configuration option?
+    compute_type: Quantization = "int8"  # TODO: should this even be a configuration option?
     cpu_threads: int = 0
     num_workers: int = 1
 
