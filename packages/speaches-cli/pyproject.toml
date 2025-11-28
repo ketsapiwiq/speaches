@@ -18,3 +18,11 @@ speaches-cli = "speaches_cli.main:app"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "speaches-cli",
+]
+
+[tool.uv.sources]
+speaches-cli = { workspace = true, editable = true }
