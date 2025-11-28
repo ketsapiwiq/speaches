@@ -5,6 +5,12 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from speaches.config import Config
 
+from speaches.executors.faster_whisper import (
+    WhisperModelManager as FasterWhisperModelManager,
+)
+from speaches.executors.faster_whisper import (
+    whisper_model_registry as faster_whisper_model_registry,
+)
 from speaches.executors.kokoro import KokoroModelManager, kokoro_model_registry
 from speaches.executors.parakeet import ParakeetModelManager, parakeet_model_registry
 from speaches.executors.piper import PiperModelManager, piper_model_registry
@@ -15,11 +21,11 @@ from speaches.executors.pyannote_speaker_embedding import (
 from speaches.executors.shared.executor import Executor
 from speaches.executors.silero_vad_v5 import SileroVADModelManager, silero_vad_model_registry
 from speaches.executors.xtts_v2 import XTTSv2ModelManager, xtts_v2_model_registry
-from speaches.executors.faster_whisper import (
-    WhisperModelManager as FasterWhisperModelManager,
-    whisper_model_registry as faster_whisper_model_registry,
-)
-from speaches.executors.openai_whisper import WhisperModelManager, whisper_model_registry
+
+# Skip openai_whisper executor as it requires the openai-whisper package
+# which is incompatible with our CPU-only setup
+WhisperModelManager = None
+whisper_model_registry = None
 
 
 class ExecutorRegistry:
@@ -30,11 +36,15 @@ class ExecutorRegistry:
             model_registry=faster_whisper_model_registry,
             task="automatic-speech-recognition",
         )
-        self._whisper_executor = Executor(
-            name="whisper",
-            model_manager=WhisperModelManager(config.stt_model_ttl, config.whisper),
-            model_registry=whisper_model_registry,
-            task="automatic-speech-recognition",
+        self._whisper_executor = (
+            Executor(
+                name="whisper",
+                model_manager=WhisperModelManager(config.stt_model_ttl, config.whisper),
+                model_registry=whisper_model_registry,
+                task="automatic-speech-recognition",
+            )
+            if WhisperModelManager and whisper_model_registry
+            else None
         )
         self._parakeet_executor = Executor(
             name="parakeet",
@@ -75,11 +85,17 @@ class ExecutorRegistry:
 
     @property
     def transcription(self):  # noqa: ANN201
-        return (self._faster_whisper_executor, self._whisper_executor, self._parakeet_executor)
+        executors = [self._faster_whisper_executor, self._parakeet_executor]
+        if self._whisper_executor is not None:
+            executors.insert(1, self._whisper_executor)
+        return tuple(executors)
 
     @property
     def translation(self):  # noqa: ANN201
-        return (self._faster_whisper_executor, self._whisper_executor)
+        executors = [self._faster_whisper_executor]
+        if self._whisper_executor is not None:
+            executors.append(self._whisper_executor)
+        return tuple(executors)
 
     @property
     def text_to_speech(self):  # noqa: ANN201
@@ -94,13 +110,15 @@ class ExecutorRegistry:
         return self._vad_executor
 
     def all_executors(self):  # noqa: ANN201
-        return (
+        executors = [
             self._faster_whisper_executor,
-            self._whisper_executor,
             self._parakeet_executor,
             self._piper_executor,
             self._kokoro_executor,
             self._xtts_v2_executor,
             self._pyannote_executor,
             self._vad_executor,
-        )
+        ]
+        if self._whisper_executor is not None:
+            executors.insert(1, self._whisper_executor)
+        return tuple(executors)
