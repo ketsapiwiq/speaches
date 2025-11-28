@@ -24,7 +24,7 @@ CHANNELS = 1
 TRANSCRIPTION_MODEL = "Systran/faster-distil-whisper-small.en"
 NO_AUDIO_TIMEOUT_SECONDS = 0.5
 
-SPEACHES_BASE_URL = os.environ.get("SPEACHES_BASE_URL", "http://localhost:8000")
+SPEACHES_BASE_URL = os.environ.get("SPEACHES_BASE_URL", "http://localhost:9000")
 WEBSOCKET_BASE_URL = SPEACHES_BASE_URL.replace("http", "ws") + "/v1"
 
 

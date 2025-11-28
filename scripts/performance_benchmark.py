@@ -185,7 +185,7 @@ DEFAULT_SCENARIOS = [
 
 
 class Config(BaseSettings):
-    speaches_base_url: SecretStr = SecretStr("http://localhost:8000")
+    speaches_base_url: SecretStr = SecretStr("http://localhost:9000")
     api_key: SecretStr = SecretStr("does-not-matter")
     log_level: str = "debug"
     """
