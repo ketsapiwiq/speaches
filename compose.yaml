@@ -6,7 +6,7 @@ services:
       context: .
     restart: unless-stopped
     ports:
-      - 9000:9000
+      - 9000:8000
     develop:
       watch:
         - action: rebuild
